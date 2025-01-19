@@ -55,7 +55,7 @@ export const buildings: Building[] = [
     },
     {
         id: 'townhall',
-        name: 'Town Hall',
+        name: 'TOWN HALL',
         type: 'special',
         cost: 1000,
         buildTime: '5m',
