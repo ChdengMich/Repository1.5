@@ -1,82 +1,38 @@
-import { app, BrowserWindow, Tray, Menu } from 'electron'
-import * as path from 'path'
-
-let mainWindow: BrowserWindow | null;
-let tray: Tray | null;
+import { app, BrowserWindow } from 'electron'
+import path from 'path'
 
 function createWindow() {
-  mainWindow = new BrowserWindow({
-    width: 1200,
-    height: 800,
+  const mainWindow = new BrowserWindow({
+    width: 800,
+    height: 600,
     webPreferences: {
       nodeIntegration: true,
-      contextIsolation: true,
-      preload: path.join(__dirname, '../preload/index.js'),
-    },
-  });
+      contextIsolation: false
+    }
+  })
 
-  if (process.env.NODE_ENV === 'development') {
-    mainWindow.loadURL('http://localhost:5173');
+  if (process.env.VITE_DEV_SERVER_URL) {
+    mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL)
   } else {
-    mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
+    mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'))
   }
 
-  mainWindow.on('closed', () => {
-    mainWindow = null;
-  });
-}
-
-function createTray() {
-  tray = new Tray(path.join(__dirname, 'icon.png'));
-  const contextMenu = Menu.buildFromTemplate([
-    { label: 'Open BuildBlocks', click: () => mainWindow?.show() },
-    { label: 'Quit', click: () => app.quit() },
-  ]);
-  
-  if (tray) {
-    tray.setToolTip('BuildBlocks');
-    tray.setContextMenu(contextMenu);
-
-    const menuBarWindow = new BrowserWindow({
-      width: 300,
-      height: 400,
-      show: false,
-      frame: false,
-      resizable: false,
-      webPreferences: {
-        nodeIntegration: true,
-        contextIsolation: true,
-        preload: path.join(__dirname, '../preload/index.js'),
-      },
-    });
-
-    menuBarWindow.loadFile(path.join(__dirname, '../menubar/menubar.html'));
-
-    tray.on('click', () => {
-      if (menuBarWindow.isVisible()) {
-        menuBarWindow.hide();
-      } else {
-        const { x, y } = tray!.getBounds();
-        menuBarWindow.setPosition(x - 150, y);
-        menuBarWindow.show();
-      }
-    });
+  // Open DevTools in development
+  if (process.env.NODE_ENV === 'development') {
+    mainWindow.webContents.openDevTools()
   }
 }
 
-app.whenReady().then(() => {
-  createWindow();
-  createTray();
-});
+app.whenReady().then(createWindow)
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
-    app.quit();
+    app.quit()
   }
-});
+})
 
 app.on('activate', () => {
-  if (mainWindow === null) {
-    createWindow();
+  if (BrowserWindow.getAllWindows().length === 0) {
+    createWindow()
   }
-}); 
+}) 
